@@ -1,0 +1,44 @@
+version: '3'
+# services our app will use 
+services:
+  nodejs-app:
+    build: .
+    ports:
+      - "8080:8080" # app will be launched on port 8080 
+    depends_on:
+      - mariadb
+    environment:
+      DB_HOST: mariadb
+      DB_ROOT_PASSWORD: PasswordR00T
+      DB_DATABASE: book_store
+      DB_USERNAME: Marcel_G  
+      DB_PASSWORD: Pa$$w00rd
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "3000:3000" # our server will be on port 3000
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on: 
+      - wait-for-nodejs
+    command: ["./wait-for", "nodejs-app:8080", "--", "nginx", "-g", "daemon off;"]
+
+  wait-for-nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile.wait-for-nodejs
+      
+
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: PasswordR00T
+      MYSQL_DATABASE: book_store
+      MYSQL_USER: Marcel_G
+      MYSQL_PASSWORD: Pa$$w00rd
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d # use the init.sql file on start up from the dir 
+  
+   
